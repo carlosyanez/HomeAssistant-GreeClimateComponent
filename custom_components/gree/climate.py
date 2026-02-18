@@ -69,6 +69,7 @@ async def create_gree_device(hass, config):
     ip_addr = config.get(CONF_HOST)
     port = config.get(CONF_PORT, DEFAULT_PORT)
     mac_addr = config.get(CONF_MAC).encode().replace(b":", b"")
+    
 
     chm = config.get(CONF_HVAC_MODES)
     hvac_modes = [getattr(HVACMode, mode.upper()) for mode in (chm if chm is not None else DEFAULT_HVAC_MODES)]
@@ -84,7 +85,8 @@ async def create_gree_device(hass, config):
     encryption_version = config.get(CONF_ENCRYPTION_VERSION, 1)
     disable_available_check = config.get(CONF_DISABLE_AVAILABLE_CHECK, False)
     temp_sensor_offset = config.get(CONF_TEMP_SENSOR_OFFSET)
-
+    zone_id = config.get("zone_id", 0) # Add this line
+    
     return GreeClimate(
         hass,
         name,
@@ -100,6 +102,7 @@ async def create_gree_device(hass, config):
         encryption_key,
         uid,
         temp_sensor_offset,
+        zone_id
     )
 
 
@@ -143,6 +146,7 @@ class GreeClimate(ClimateEntity):
         encryption_key=None,
         uid=None,
         temp_sensor_offset=None,
+        zone_id=0,
     ):
         _LOGGER.info(f"{name}: Initializing Gree climate device")
 
@@ -217,6 +221,8 @@ class GreeClimate(ClimateEntity):
             self._uid = uid
         else:
             self._uid = 0
+        
+        self._zone_id = zone_id
 
         self._acOptions = {
             "Pow": None,
@@ -238,6 +244,7 @@ class GreeClimate(ClimateEntity):
             "TemRec": None,
             "SvSt": None,
             "SlpMod": None,
+            "Wid": self._zone_id, 
         }
         self._optionsToFetch = ["Pow", "Mod", "SetTem", "WdSpd", "Air", "Blo", "Health", "SwhSlp", "Lig", "SwingLfRig", "SwUpDn", "Quiet", "Tur", "StHt", "TemUn", "HeatCoolType", "TemRec", "SvSt", "SlpMod"]
 
@@ -284,6 +291,9 @@ class GreeClimate(ClimateEntity):
     async def SendStateToAc(self):
         opt_list = ["Pow", "Mod", "SetTem", "WdSpd", "Air", "Blo", "Health", "SwhSlp", "Lig", "SwingLfRig", "SwUpDn", "Quiet", "Tur", "StHt", "TemUn", "HeatCoolType", "TemRec", "SvSt", "SlpMod", "AntiDirectBlow", "LigSen"]
 
+        # Ensure _acOptions has the current zone ID
+        self._acOptions["Wid"] = self._zone_id
+        
         # Collect values from _acOptions
         p_values = [self._acOptions.get(k) for k in opt_list]
 
