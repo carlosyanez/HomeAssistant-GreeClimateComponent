@@ -60,6 +60,7 @@ CLIMATE_SCHEMA = vol.Schema(
         vol.Optional(CONF_SWING_HORIZONTAL_MODES, default=DEFAULT_SWING_HORIZONTAL_MODES): vol.All(cv.ensure_list, [cv.string]),
         vol.Optional(CONF_DISABLE_AVAILABLE_CHECK, default=False): cv.boolean,
         vol.Optional(CONF_TEMP_SENSOR_OFFSET): cv.boolean,
+        vol.Optional("zone_id", default=0): cv.positive_int,
     }
 )
 
